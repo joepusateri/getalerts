@@ -46,10 +46,13 @@ def get_alerts(startdate, enddate, filename, serviceid, token):
 
         response = requests.request("GET", url, headers=headers, params=querystring)
 
-        #print(response.text)
+        if response.text == "":
+            print(f'Error calling PagerDuty REST API: {response}')
+            return
+
         js = response.json()
         if "error" in js:
-            print(f'Error calling PagerDuty REST API: {js["error"]}')
+            print(f'Error calling PagerDuty REST API: {js["error"]["message"]}')
             return
 
         total = js['total']
@@ -78,6 +81,7 @@ def get_alerts(startdate, enddate, filename, serviceid, token):
         offset += limit
         #print('is there more? ' + str(ismore))
 
+    print('\n')
     file = open(filename,'w')
     if len(output_columns) > 0:
         firstCol = True

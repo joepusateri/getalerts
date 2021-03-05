@@ -59,23 +59,31 @@ def get_alerts(startdate, enddate, filename, serviceid, token):
         for alert in js['alerts']:
             count = count + 1
             print("\r{:.0%} Complete".format(count / total), end='', flush=True)
-            if (serviceid == None or alert['service']['id'] == serviceid) and 'incident' in alert and alert['incident'] != None:
-                clear(output_columns)
-                output_columns.update({"id": alert['id'], "incident_id": alert['incident']['id'] })
+            try:
+                if alert['suppressed'] == False:
+                    if (serviceid is None or alert['service']['id'] == serviceid) and 'incident' in alert and alert['incident'] is not None:
+                        clear(output_columns)
+                        output_columns.update({"id": alert['id'], "incident_id": alert['incident']['id'] })
 
-                if alert['body']['details'] != None \
-                        and "Resource" in alert['body']['details'] \
-                        and isinstance(alert["body"]["details"],dict):
-                    flat_json = flatten(alert['body']['details'])
-                    #print(flat_json)
-                    for key, val in flat_json.items():
-                        if val.find('\n') > 0 or val.find('"') > 0:
-                            val = val.replace('\n', ' ')
-                            val = val.replace('"', '')
-                            flat_json[key] = val
-                    output_columns.update(flat_json)
+                        if alert['body']['details'] != None \
+                                and "Resource" in alert['body']['details'] \
+                                and isinstance(alert["body"]["details"],dict):
+                            flat_json = flatten(alert['body']['details'])
 
-                results.append(output_columns.copy())
+                            for key, val in flat_json.items():
+                                if val.find('\n') > 0 or val.find('"') > 0:
+                                    val = val.replace('\n', ' ')
+                                    val = val.replace('"', '')
+                                    flat_json[key] = val
+                            output_columns.update(flat_json)
+
+                        results.append(output_columns.copy())
+            except TypeError as err:
+                print(f'\nError processing an alert: {err}')
+                print(alert)
+            except:
+                print (f'\nError processing an alert: {sys.exc_info()[0]}')
+                print(alert)
 
         ismore = js['more']
         offset += limit
